@@ -53,7 +53,6 @@
 **    HoedownRenderUseTaskList   Off
 **    HoedownRenderSkipEol       Off
 **    HoedownRenderTocSkipEscape Off
-**    HoedownRenderTocCount      Off
 **
 **    <Location /hoedown>
 **      # AddHandler hoedown .md
@@ -708,7 +707,6 @@ HOEDOWN_SET_RENDER(prettify, HOEDOWN_HTML_PRETTIFY);
 HOEDOWN_SET_RENDER(usetasklist, HOEDOWN_HTML_USE_TASK_LIST);
 HOEDOWN_SET_RENDER(skipeol, HOEDOWN_HTML_SKIP_EOL);
 HOEDOWN_SET_RENDER(tocskipescape, HOEDOWN_HTML_SKIP_TOC_ESCAPE);
-HOEDOWN_SET_RENDER(toccount, HOEDOWN_HTML_TOC_COUNT);
 
 static const command_rec
 hoedown_cmds[] = {
@@ -827,8 +825,6 @@ hoedown_cmds[] = {
                  NULL, OR_ALL, "Enable hoedown render Skip EOL"),
     AP_INIT_FLAG("HoedownRenderTocSkipEscape", hoedown_set_render_tocskipescape,
                  NULL, OR_ALL, "Enable hoedown render Skip Toc Escape"),
-    AP_INIT_FLAG("HoedownRenderTocCount", hoedown_set_render_toccount,
-                 NULL, OR_ALL, "Enable hoedown render Toc Count"),
     {NULL}
 };
 

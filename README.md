@@ -97,7 +97,6 @@ On/Off:
 * HoedownRenderSkipEol
 * HoedownRenderToc
 * HoedownRenderTocSkipEscape
-* HoedownRenderTocCount
 
 
 ### Raw option
@@ -765,55 +764,6 @@ HTML render option (default: Off).
      </ul>
      ```
 
-* HoedownRenderSkipTocCount
-
-  Required HoedownRenderToc option.
-
-  ```
-  ### header3-1
-  ### header3-2
-  ```
-
-  __On__:
-
-  ```
-  <h3 id="toc_20">header3-1</h3>
-  <h3 id="toc_21">header3-2</h3>
-  ```
-
-  * toc render:
-
-     ```
-     <ul>
-     <li>
-     <a href="#toc_0">header3-1</a>
-     </li>
-     <li>
-     <a href="#toc_1">header3-2</a>
-     </li>
-     </ul>
-     ```
-
-  __Off__:
-
-  ```
-  <h3 id="header3-1">header3-1</h3>
-  <h3 id="header3-2">header3-2</h3>
-  ```
-
-  * toc render:
-
-     ```
-     <ul>
-     <li>
-     <a href="#header3-1">header3-1</a>
-     </li>
-     <li>
-     <a href="#header3-2">header3-2</a>
-     </li>
-     </ul>
-     ```
-
 ### Table of Contents options
 
 Required HoedownRenderToc option.
@@ -930,7 +880,6 @@ conf: `HoedownTocHeader '<div class="toc">'`, `HoedownTocFooter '</div>'`
 </ul>
 </div>
 ```
-
 
 You can change the toc range by specifying the toc parameters.
 
