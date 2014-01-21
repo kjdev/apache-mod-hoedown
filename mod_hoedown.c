@@ -60,10 +60,6 @@
 **    </Location>
 */
 
-#ifdef HAVE_CONFIG_H
-#  include "config.h"
-#endif
-
 /* httpd */
 #include "httpd.h"
 #include "http_config.h"
@@ -79,6 +75,14 @@
 /* apreq2 */
 #include "apreq2/apreq_module_apache2.h"
 
+#ifdef HAVE_CONFIG_H
+#  undef PACKAGE_NAME
+#  undef PACKAGE_STRING
+#  undef PACKAGE_TARNAME
+#  undef PACKAGE_VERSION
+#  include "config.h"
+#endif
+
 #ifdef HOEDOWN_URL_SUPPORT
 /* libcurl */
 #include "curl/curl.h"
@@ -88,6 +92,12 @@
 #include "hoedown/src/markdown.h"
 #include "hoedown/src/html.h"
 #include "hoedown/src/buffer.h"
+
+#ifdef __GNUC__
+#  define UNUSED(x) UNUSED_ ## x __attribute__((__unused__))
+#else
+#  define UNUSED(x) UNUSED_ ## x
+#endif
 
 #define HOEDOWN_READ_UNIT       1024
 #define HOEDOWN_OUTPUT_UNIT     64
@@ -538,7 +548,7 @@ hoedown_handler(request_rec *r)
 }
 
 static void *
-hoedown_create_dir_config(apr_pool_t *p, char *dir)
+hoedown_create_dir_config(apr_pool_t *p, char * UNUSED(dir))
 {
     hoedown_config_rec *cfg;
 
@@ -656,15 +666,15 @@ hoedown_merge_dir_config(apr_pool_t *p, void *base_conf, void *override_conf)
     return (void *)cfg;
 }
 
-#define HOEDOWN_SET_EXTENSIONS(_name, _ext)                                 \
-static const char *                                                         \
-hoedown_set_extensions_ ## _name(cmd_parms *parms, void *mconfig, int bool) \
-{                                                                           \
-    hoedown_config_rec *cfg = (hoedown_config_rec *)mconfig;                \
-    if (bool != 0) {                                                        \
-        cfg->extensions |= _ext;                                            \
-    }                                                                       \
-    return NULL;                                                            \
+#define HOEDOWN_SET_EXTENSIONS(_name, _ext)                                          \
+static const char *                                                                  \
+hoedown_set_extensions_ ## _name(cmd_parms * UNUSED(parms), void *mconfig, int bool) \
+{                                                                                    \
+    hoedown_config_rec *cfg = (hoedown_config_rec *)mconfig;                         \
+    if (bool != 0) {                                                                 \
+        cfg->extensions |= _ext;                                                     \
+    }                                                                                \
+    return NULL;                                                                     \
 }
 
 HOEDOWN_SET_EXTENSIONS(nointraemphasis, HOEDOWN_EXT_NO_INTRA_EMPHASIS);
@@ -682,15 +692,15 @@ HOEDOWN_SET_EXTENSIONS(footnotes, HOEDOWN_EXT_FOOTNOTES);
 HOEDOWN_SET_EXTENSIONS(quote, HOEDOWN_EXT_QUOTE);
 HOEDOWN_SET_EXTENSIONS(specialattribute, HOEDOWN_EXT_SPECIAL_ATTRIBUTE);
 
-#define HOEDOWN_SET_RENDER(_name, _ext)                                 \
-static const char *                                                     \
-hoedown_set_render_ ## _name(cmd_parms *parms, void *mconfig, int bool) \
-{                                                                       \
-    hoedown_config_rec *cfg = (hoedown_config_rec *)mconfig;            \
-    if (bool != 0) {                                                    \
-        cfg->html |= _ext;                                              \
-    }                                                                   \
-    return NULL;                                                        \
+#define HOEDOWN_SET_RENDER(_name, _ext)                                          \
+static const char *                                                              \
+hoedown_set_render_ ## _name(cmd_parms * UNUSED(parms), void *mconfig, int bool) \
+{                                                                                \
+    hoedown_config_rec *cfg = (hoedown_config_rec *)mconfig;                     \
+    if (bool != 0) {                                                             \
+        cfg->html |= _ext;                                                       \
+    }                                                                            \
+    return NULL;                                                                 \
 }
 
 HOEDOWN_SET_RENDER(skiphtml, HOEDOWN_HTML_SKIP_HTML);
@@ -829,7 +839,7 @@ hoedown_cmds[] = {
 };
 
 static void
-hoedown_register_hooks(apr_pool_t *p)
+hoedown_register_hooks(apr_pool_t * UNUSED(p))
 {
     ap_hook_handler(hoedown_handler, NULL, NULL, APR_HOOK_MIDDLE);
 }
