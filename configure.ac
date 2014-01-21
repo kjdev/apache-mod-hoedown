@@ -7,13 +7,12 @@ AC_CONFIG_SRCDIR([mod_hoedown.c])
 AC_CONFIG_HEADERS([config.h])
 AC_CONFIG_MACRO_DIR([m4])
 
-AM_INIT_AUTOMAKE(mod_hoedown, 0.2.0, [NO-DEFINE])
-AM_INIT_AUTOMAKE([-Wall -Werror foreign])
+AM_INIT_AUTOMAKE([-Wall -Werror foreign subdir-objects])
 
 # Checks for programs.
 # AC_PROG_CC
-AC_PROG_LIBTOOL
 AM_PROG_AR
+AC_PROG_LIBTOOL
 
 # Option for hoedown url support
 AC_ARG_ENABLE(hoedown-url-support,

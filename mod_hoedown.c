@@ -60,10 +60,6 @@
 **    </Location>
 */
 
-#ifdef HAVE_CONFIG_H
-#  include "config.h"
-#endif
-
 /* httpd */
 #include "httpd.h"
 #include "http_config.h"
@@ -79,6 +75,14 @@
 /* apreq2 */
 #include "apreq2/apreq_module_apache2.h"
 
+#ifdef HAVE_CONFIG_H
+#  undef PACKAGE_NAME
+#  undef PACKAGE_STRING
+#  undef PACKAGE_TARNAME
+#  undef PACKAGE_VERSION
+#  include "config.h"
+#endif
+
 #ifdef HOEDOWN_URL_SUPPORT
 /* libcurl */
 #include "curl/curl.h"
@@ -89,10 +93,17 @@
 #include "hoedown/src/html.h"
 #include "hoedown/src/buffer.h"
 
+#ifdef __GNUC__
+#  define UNUSED(x) UNUSED_ ## x __attribute__((__unused__))
+#else
+#  define UNUSED(x) UNUSED_ ## x
+#endif
+
 #define HOEDOWN_READ_UNIT       1024
 #define HOEDOWN_OUTPUT_UNIT     64
 #define HOEDOWN_CURL_TIMEOUT    30
 #define HOEDOWN_TITLE_DEFAULT   "Markdown"
+#define HOEDOWN_TITLE_MARKER    "$title"
 #define HOEDOWN_CONTENT_TYPE    "text/html"
 #define HOEDOWN_TAG             "<body*>"
 #define HOEDOWN_STYLE_EXT       ".html"
@@ -128,13 +139,20 @@ module AP_MODULE_DECLARE_DATA hoedown_module;
 
 
 static int
-output_style_header(request_rec *r, apr_file_t *fp)
+output_style_header(request_rec *r, apr_file_t *fp, char const *markdown_title)
 {
     char buf[HUGE_STRING_LEN];
     char *lower = NULL;
 
     while (apr_file_gets(buf, HUGE_STRING_LEN, fp) == APR_SUCCESS) {
-        ap_rputs(buf, r);
+        char *p = strstr(buf, HOEDOWN_TITLE_MARKER);
+        if (!p) {
+            ap_rputs(buf, r);
+        } else {
+            ap_rwrite(buf, p - buf, r);
+            ap_rputs(markdown_title, r);
+            ap_rputs(p + strlen(HOEDOWN_TITLE_MARKER), r);
+        }
 
         lower = apr_pstrdup(r->pool, buf);
         ap_str_tolower(lower);
@@ -147,17 +165,36 @@ output_style_header(request_rec *r, apr_file_t *fp)
 }
 
 static apr_file_t *
-style_header(request_rec *r, hoedown_config_rec *cfg, char *filename)
+style_header(request_rec *r, hoedown_config_rec *cfg, char const *style_filename, char const *markdown_filename)
 {
     apr_status_t rc = -1;
     apr_file_t *fp = NULL;
     char *style_filepath = NULL;
 
-    if (filename == NULL && cfg->style.name != NULL) {
-        filename = cfg->style.name;
+    char *markdown_title;
+    if (markdown_filename) {
+        char const *p, *pp, *ps;
+        p = pp = ps = rawmemchr(markdown_filename, '\0');
+        while (ps >= markdown_filename && *ps != '/')
+            ps--;
+        if (ps <= markdown_filename)
+            ps = markdown_filename;
+        else
+            ps++;
+        while (p >= ps && *p != '.')
+            p--;
+        if (p < ps)
+            p = pp;
+        markdown_title = apr_pstrndup(r->pool, ps, p - ps);
+    } else {
+        markdown_title = HOEDOWN_TITLE_DEFAULT;
     }
 
-    if (filename != NULL) {
+    if (style_filename == NULL && cfg->style.name != NULL) {
+        style_filename = cfg->style.name;
+    }
+
+    if (style_filename != NULL) {
         if (cfg->style.path == NULL) {
             ap_add_common_vars(r);
             cfg->style.path = (char *)apr_table_get(r->subprocess_env,
@@ -165,13 +202,13 @@ style_header(request_rec *r, hoedown_config_rec *cfg, char *filename)
         }
 
         style_filepath = apr_psprintf(r->pool, "%s/%s%s",
-                                      cfg->style.path, filename, cfg->style.ext);
+                                      cfg->style.path, style_filename, cfg->style.ext);
 
         rc = apr_file_open(&fp, style_filepath,
                            APR_READ | APR_BINARY | APR_XTHREAD,
                            APR_OS_DEFAULT, r->pool);
         if (rc == APR_SUCCESS) {
-            if (output_style_header(r, fp) != 1) {
+            if (output_style_header(r, fp, markdown_title) != 1) {
                 apr_file_close(fp);
                 fp = NULL;
             }
@@ -185,7 +222,7 @@ style_header(request_rec *r, hoedown_config_rec *cfg, char *filename)
                                APR_READ | APR_BINARY | APR_XTHREAD,
                                APR_OS_DEFAULT, r->pool);
             if (rc == APR_SUCCESS) {
-                if (output_style_header(r, fp) != 1) {
+                if (output_style_header(r, fp, markdown_title) != 1) {
                     apr_file_close(fp);
                     fp = NULL;
                 }
@@ -195,7 +232,7 @@ style_header(request_rec *r, hoedown_config_rec *cfg, char *filename)
 
     if (rc != APR_SUCCESS) {
         ap_rputs("<!DOCTYPE html>\n<html>\n", r);
-        ap_rputs("<head><title>"HOEDOWN_TITLE_DEFAULT"</title></head>\n", r);
+        ap_rprintf(r, "<head><title>%s</title></head>\n", markdown_title);
         ap_rputs("<body>\n", r);
     }
 
@@ -437,7 +474,7 @@ hoedown_handler(request_rec *r)
         }
 
         /* output style header */
-        fp = style_header(r, cfg, style);
+        fp = style_header(r, cfg, style, r->filename);
 
         if (cfg->html & HOEDOWN_HTML_TOC) {
             /* toc */
@@ -525,7 +562,7 @@ hoedown_handler(request_rec *r)
         hoedown_buffer_free(ob);
     } else {
         /* output style header */
-        fp = style_header(r, cfg, style);
+        fp = style_header(r, cfg, style, r->filename);
     }
 
     /* cleanup */
@@ -538,7 +575,7 @@ hoedown_handler(request_rec *r)
 }
 
 static void *
-hoedown_create_dir_config(apr_pool_t *p, char *dir)
+hoedown_create_dir_config(apr_pool_t *p, char * UNUSED(dir))
 {
     hoedown_config_rec *cfg;
 
@@ -656,15 +693,15 @@ hoedown_merge_dir_config(apr_pool_t *p, void *base_conf, void *override_conf)
     return (void *)cfg;
 }
 
-#define HOEDOWN_SET_EXTENSIONS(_name, _ext)                                 \
-static const char *                                                         \
-hoedown_set_extensions_ ## _name(cmd_parms *parms, void *mconfig, int bool) \
-{                                                                           \
-    hoedown_config_rec *cfg = (hoedown_config_rec *)mconfig;                \
-    if (bool != 0) {                                                        \
-        cfg->extensions |= _ext;                                            \
-    }                                                                       \
-    return NULL;                                                            \
+#define HOEDOWN_SET_EXTENSIONS(_name, _ext)                                          \
+static const char *                                                                  \
+hoedown_set_extensions_ ## _name(cmd_parms * UNUSED(parms), void *mconfig, int bool) \
+{                                                                                    \
+    hoedown_config_rec *cfg = (hoedown_config_rec *)mconfig;                         \
+    if (bool != 0) {                                                                 \
+        cfg->extensions |= _ext;                                                     \
+    }                                                                                \
+    return NULL;                                                                     \
 }
 
 HOEDOWN_SET_EXTENSIONS(nointraemphasis, HOEDOWN_EXT_NO_INTRA_EMPHASIS);
@@ -682,15 +719,15 @@ HOEDOWN_SET_EXTENSIONS(footnotes, HOEDOWN_EXT_FOOTNOTES);
 HOEDOWN_SET_EXTENSIONS(quote, HOEDOWN_EXT_QUOTE);
 HOEDOWN_SET_EXTENSIONS(specialattribute, HOEDOWN_EXT_SPECIAL_ATTRIBUTE);
 
-#define HOEDOWN_SET_RENDER(_name, _ext)                                 \
-static const char *                                                     \
-hoedown_set_render_ ## _name(cmd_parms *parms, void *mconfig, int bool) \
-{                                                                       \
-    hoedown_config_rec *cfg = (hoedown_config_rec *)mconfig;            \
-    if (bool != 0) {                                                    \
-        cfg->html |= _ext;                                              \
-    }                                                                   \
-    return NULL;                                                        \
+#define HOEDOWN_SET_RENDER(_name, _ext)                                          \
+static const char *                                                              \
+hoedown_set_render_ ## _name(cmd_parms * UNUSED(parms), void *mconfig, int bool) \
+{                                                                                \
+    hoedown_config_rec *cfg = (hoedown_config_rec *)mconfig;                     \
+    if (bool != 0) {                                                             \
+        cfg->html |= _ext;                                                       \
+    }                                                                            \
+    return NULL;                                                                 \
 }
 
 HOEDOWN_SET_RENDER(skiphtml, HOEDOWN_HTML_SKIP_HTML);
@@ -829,7 +866,7 @@ hoedown_cmds[] = {
 };
 
 static void
-hoedown_register_hooks(apr_pool_t *p)
+hoedown_register_hooks(apr_pool_t * UNUSED(p))
 {
     ap_hook_handler(hoedown_handler, NULL, NULL, APR_HOOK_MIDDLE);
 }
