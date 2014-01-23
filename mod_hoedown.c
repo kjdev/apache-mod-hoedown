@@ -371,9 +371,9 @@ hoedown_handler(request_rec *r)
 
     /* hoedown: markdown */
     hoedown_buffer *ib, *ob;
-    hoedown_callbacks callbacks;
-    hoedown_html_renderopt options;
-    struct hoedown_markdown *markdown;
+    hoedown_markdown *markdown;
+    hoedown_renderer *renderer;
+    hoedown_html_renderer_state *state;
 
     if (strcmp(r->handler, "hoedown")) {
         return DECLINED;
@@ -515,19 +515,21 @@ hoedown_handler(request_rec *r)
 
             ob = hoedown_buffer_new(HOEDOWN_OUTPUT_UNIT);
 
-            hoedown_html_toc_renderer(&callbacks, &options, 0);
+            renderer = hoedown_html_toc_renderer_new(0);
+            state = (hoedown_html_renderer_state *)renderer->opaque;
 
-            options.flags = cfg->html;
-            options.toc_data.starting_level = toc_starting;
-            options.toc_data.nesting_level = toc_nesting;
-            options.toc_data.header = cfg->toc.header;
-            options.toc_data.footer = cfg->toc.footer;
+            state->flags = cfg->html;
+            state->toc_data.starting_level = toc_starting;
+            state->toc_data.nesting_level = toc_nesting;
+            state->toc_data.header = cfg->toc.header;
+            state->toc_data.footer = cfg->toc.footer;
 
-            markdown = hoedown_markdown_new(cfg->extensions, 16,
-                                            &callbacks, &options);
+            markdown = hoedown_markdown_new(cfg->extensions, 16, renderer);
 
             hoedown_markdown_render(ob, ib->data, ib->size, markdown);
+
             hoedown_markdown_free(markdown);
+            hoedown_html_renderer_free(renderer);
 
             ap_rwrite(ob->data, ob->size, r);
 
@@ -538,28 +540,30 @@ hoedown_handler(request_rec *r)
         ob = hoedown_buffer_new(HOEDOWN_OUTPUT_UNIT);
 
         /* markdown render */
-        hoedown_html_renderer(&callbacks, &options, 0, 0);
+        renderer = hoedown_html_renderer_new(0, 0);
+        state = (hoedown_html_renderer_state *)renderer->opaque;
 
-        options.flags = cfg->html;
+        state->flags = cfg->html;
 
-        options.toc_data.starting_level = toc_starting;
-        options.toc_data.nesting_level = toc_nesting;
+        state->toc_data.starting_level = toc_starting;
+        state->toc_data.nesting_level = toc_nesting;
 
-        if ((options.flags & HOEDOWN_HTML_USE_TASK_LIST) && cfg->class.task) {
-            options.class_attributes.task = cfg->class.task;
+        if ((state->flags & HOEDOWN_HTML_USE_TASK_LIST) && cfg->class.task) {
+            state->class_attributes.task = cfg->class.task;
         }
         if (cfg->class.ol) {
-            options.class_attributes.ol = cfg->class.ol;
+            state->class_attributes.ol = cfg->class.ol;
         }
         if (cfg->class.ul) {
-            options.class_attributes.ul = cfg->class.ul;
+            state->class_attributes.ul = cfg->class.ul;
         }
 
-        markdown = hoedown_markdown_new(cfg->extensions, 16,
-                                        &callbacks, &options);
+        markdown = hoedown_markdown_new(cfg->extensions, 16, renderer);
 
         hoedown_markdown_render(ob, ib->data, ib->size, markdown);
+
         hoedown_markdown_free(markdown);
+        hoedown_html_renderer_free(renderer);
 
         /* writing the result */
         ap_rwrite(ob->data, ob->size, r);
