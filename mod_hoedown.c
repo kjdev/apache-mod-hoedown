@@ -165,26 +165,31 @@ output_style_header(request_rec *r, apr_file_t *fp, char const *markdown_title)
 }
 
 static apr_file_t *
-style_header(request_rec *r, hoedown_config_rec *cfg, char const *style_filename, char const *markdown_filename)
+style_header(request_rec *r, hoedown_config_rec *cfg,
+             char const *style_filename, char const *markdown_filename)
 {
     apr_status_t rc = -1;
     apr_file_t *fp = NULL;
     char *style_filepath = NULL;
-
     char *markdown_title;
+
     if (markdown_filename) {
         char const *p, *pp, *ps;
         p = pp = ps = rawmemchr(markdown_filename, '\0');
-        while (ps >= markdown_filename && *ps != '/')
+        while (ps >= markdown_filename && *ps != '/') {
             ps--;
-        if (ps <= markdown_filename)
+        }
+        if (ps <= markdown_filename) {
             ps = markdown_filename;
-        else
+        } else {
             ps++;
-        while (p >= ps && *p != '.')
+        }
+        while (p >= ps && *p != '.') {
             p--;
-        if (p < ps)
+        }
+        if (p < ps) {
             p = pp;
+        }
         markdown_title = apr_pstrndup(r->pool, ps, p - ps);
     } else {
         markdown_title = HOEDOWN_TITLE_DEFAULT;
@@ -202,7 +207,8 @@ style_header(request_rec *r, hoedown_config_rec *cfg, char const *style_filename
         }
 
         style_filepath = apr_psprintf(r->pool, "%s/%s%s",
-                                      cfg->style.path, style_filename, cfg->style.ext);
+                                      cfg->style.path, style_filename,
+                                      cfg->style.ext);
 
         rc = apr_file_open(&fp, style_filepath,
                            APR_READ | APR_BINARY | APR_XTHREAD,
