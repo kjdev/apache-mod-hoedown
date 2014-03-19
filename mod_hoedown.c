@@ -21,22 +21,23 @@
 **    HoedownTocFooter   '</div>'
 **    HoedownTocStarting 2
 **    HoedownTocNesting  6
+**    HoedownTocUnescape Off
 **    # Raw options
 **    HoedownRaw On
 **    # Extension options
-**    HoedownExtNoIntraEmphasis     Off
+**    HoedownExtSpaceHeaders        Off
 **    HoedownExtTables              Off
 **    HoedownExtFencedCode          Off
+**    HoedownExtFootnotes           Off
 **    HoedownExtAutolink            Off
 **    HoedownExtStrikethrough       Off
 **    HoedownExtUnderline           Off
-**    HoedownExtSpaceHeaders        Off
+**    HoedownExtHighlight           Off
+**    HoedownExtQuote               Off
 **    HoedownExtSuperscript         Off
 **    HoedownExtLaxSpacing          Off
+**    HoedownExtNoIntraEmphasis     Off
 **    HoedownExtDisableIndentedCode Off
-**    HoedownExtHighlight           Off
-**    HoedownExtFootnotes           Off
-**    HoedownExtQuote               Off
 **    HoedownExtSpecialAttribute    Off
 **    # Html Render options
 **    HoedownRenderSkipHtml      Off
@@ -49,10 +50,8 @@
 **    HoedownRenderHardWrap      Off
 **    HoedownRenderUseXhtml      Off
 **    HoedownRenderEscape        Off
-**    HoedownRenderPrettify      Off
 **    HoedownRenderUseTaskList   Off
-**    HoedownRenderSkipEol       Off
-**    HoedownRenderTocSkipEscape Off
+**    HoedownRenderLineContinue  Off
 **
 **    <Location /hoedown>
 **      # AddHandler hoedown .md
@@ -89,7 +88,8 @@
 #endif
 
 /* hoedown */
-#include "hoedown/src/markdown.h"
+#include "hoedown/src/version.h"
+#include "hoedown/src/document.h"
 #include "hoedown/src/html.h"
 #include "hoedown/src/buffer.h"
 
@@ -127,6 +127,7 @@ typedef struct {
     struct {
         int starting;
         int nesting;
+        int unescape;
         char *header;
         char *footer;
     } toc;
@@ -371,7 +372,7 @@ hoedown_handler(request_rec *r)
 
     /* hoedown: markdown */
     hoedown_buffer *ib, *ob;
-    hoedown_markdown *markdown;
+    hoedown_document *markdown;
     hoedown_renderer *renderer;
     hoedown_html_renderer_state *state;
 
@@ -519,16 +520,19 @@ hoedown_handler(request_rec *r)
             state = (hoedown_html_renderer_state *)renderer->opaque;
 
             state->flags = cfg->html;
-            state->toc_data.starting_level = toc_starting;
+            state->toc_data.level_offset = toc_starting;
             state->toc_data.nesting_level = toc_nesting;
+#ifdef HOEDOWN_VERSION_EXTRAS
             state->toc_data.header = cfg->toc.header;
             state->toc_data.footer = cfg->toc.footer;
+            state->toc_data.unescape = cfg->toc.unescape;
+#endif
 
-            markdown = hoedown_markdown_new(cfg->extensions, 16, renderer);
+            markdown = hoedown_document_new(renderer, cfg->extensions, 16);
 
-            hoedown_markdown_render(ob, ib->data, ib->size, markdown);
+            hoedown_document_render(markdown, ob, ib->data, ib->size);
 
-            hoedown_markdown_free(markdown);
+            hoedown_document_free(markdown);
             hoedown_html_renderer_free(renderer);
 
             ap_rwrite(ob->data, ob->size, r);
@@ -545,24 +549,26 @@ hoedown_handler(request_rec *r)
 
         state->flags = cfg->html;
 
-        state->toc_data.starting_level = toc_starting;
+        state->toc_data.level_offset = toc_starting;
         state->toc_data.nesting_level = toc_nesting;
 
+#ifdef HOEDOWN_VERSION_EXTRAS
         if ((state->flags & HOEDOWN_HTML_USE_TASK_LIST) && cfg->class.task) {
-            state->class_attributes.task = cfg->class.task;
+            state->class_data.task = cfg->class.task;
         }
         if (cfg->class.ol) {
-            state->class_attributes.ol = cfg->class.ol;
+            state->class_data.ol = cfg->class.ol;
         }
         if (cfg->class.ul) {
-            state->class_attributes.ul = cfg->class.ul;
+            state->class_data.ul = cfg->class.ul;
         }
+#endif
 
-        markdown = hoedown_markdown_new(cfg->extensions, 16, renderer);
+        markdown = hoedown_document_new(renderer, cfg->extensions, 16);
 
-        hoedown_markdown_render(ob, ib->data, ib->size, markdown);
+        hoedown_document_render(markdown, ob, ib->data, ib->size);
 
-        hoedown_markdown_free(markdown);
+        hoedown_document_free(markdown);
         hoedown_html_renderer_free(renderer);
 
         /* writing the result */
@@ -605,6 +611,7 @@ hoedown_create_dir_config(apr_pool_t *p, char * UNUSED(dir))
     cfg->toc.nesting = HOEDOWN_TOC_NESTING;
     cfg->toc.header = NULL;
     cfg->toc.footer = NULL;
+    cfg->toc.unescape = 0;
     cfg->raw = 0;
     cfg->extensions = 0;
     cfg->html = 0;
@@ -646,6 +653,7 @@ hoedown_merge_dir_config(apr_pool_t *p, void *base_conf, void *override_conf)
         cfg->style.ext = base->style.ext;
     }
 
+#ifdef HOEDOWN_VERSION_EXTRAS
     if (override->class.ul && strlen(override->class.ul) > 0) {
         cfg->class.ul = override->class.ul;
     } else {
@@ -661,6 +669,7 @@ hoedown_merge_dir_config(apr_pool_t *p, void *base_conf, void *override_conf)
     } else {
         cfg->class.task = base->class.task;
     }
+#endif
 
     if (override->toc.starting != HOEDOWN_TOC_STARTING) {
         cfg->toc.starting = override->toc.starting;
@@ -672,6 +681,7 @@ hoedown_merge_dir_config(apr_pool_t *p, void *base_conf, void *override_conf)
     } else {
         cfg->toc.nesting = base->toc.nesting;
     }
+#ifdef HOEDOWN_VERSION_EXTRAS
     if (override->toc.header && strlen(override->toc.header) > 0) {
         cfg->toc.header = override->toc.header;
     } else {
@@ -682,6 +692,12 @@ hoedown_merge_dir_config(apr_pool_t *p, void *base_conf, void *override_conf)
     } else {
         cfg->toc.footer = base->toc.footer;
     }
+    if (override->toc.unescape) {
+        cfg->toc.unescape = override->toc.unescape;
+    } else {
+        cfg->toc.unescape = base->toc.unescape;
+    }
+#endif
 
     if (override->raw != 0) {
         cfg->raw = 1;
@@ -703,41 +719,43 @@ hoedown_merge_dir_config(apr_pool_t *p, void *base_conf, void *override_conf)
     return (void *)cfg;
 }
 
-#define HOEDOWN_SET_EXTENSIONS(_name, _ext)                                          \
-static const char *                                                                  \
-hoedown_set_extensions_ ## _name(cmd_parms * UNUSED(parms), void *mconfig, int bool) \
-{                                                                                    \
-    hoedown_config_rec *cfg = (hoedown_config_rec *)mconfig;                         \
-    if (bool != 0) {                                                                 \
-        cfg->extensions |= _ext;                                                     \
-    }                                                                                \
-    return NULL;                                                                     \
+#define HOEDOWN_SET_EXTENSIONS(_name, _ext) \
+static const char * \
+hoedown_set_extensions_ ## _name( \
+    cmd_parms * UNUSED(parms), void *mconfig, int bool) { \
+    hoedown_config_rec *cfg = (hoedown_config_rec *)mconfig; \
+    if (bool != 0) { \
+        cfg->extensions |= _ext; \
+    } \
+    return NULL; \
 }
 
-HOEDOWN_SET_EXTENSIONS(nointraemphasis, HOEDOWN_EXT_NO_INTRA_EMPHASIS);
+HOEDOWN_SET_EXTENSIONS(spaceheaders, HOEDOWN_EXT_SPACE_HEADERS);
 HOEDOWN_SET_EXTENSIONS(tables, HOEDOWN_EXT_TABLES);
 HOEDOWN_SET_EXTENSIONS(fencedcode, HOEDOWN_EXT_FENCED_CODE);
+HOEDOWN_SET_EXTENSIONS(footnotes, HOEDOWN_EXT_FOOTNOTES);
 HOEDOWN_SET_EXTENSIONS(autolink, HOEDOWN_EXT_AUTOLINK);
 HOEDOWN_SET_EXTENSIONS(strikethrough, HOEDOWN_EXT_STRIKETHROUGH);
 HOEDOWN_SET_EXTENSIONS(underline, HOEDOWN_EXT_UNDERLINE);
-HOEDOWN_SET_EXTENSIONS(spaceheaders, HOEDOWN_EXT_SPACE_HEADERS);
+HOEDOWN_SET_EXTENSIONS(highlight, HOEDOWN_EXT_HIGHLIGHT);
+HOEDOWN_SET_EXTENSIONS(quote, HOEDOWN_EXT_QUOTE);
 HOEDOWN_SET_EXTENSIONS(superscript, HOEDOWN_EXT_SUPERSCRIPT);
 HOEDOWN_SET_EXTENSIONS(laxspacing, HOEDOWN_EXT_LAX_SPACING);
+HOEDOWN_SET_EXTENSIONS(nointraemphasis, HOEDOWN_EXT_NO_INTRA_EMPHASIS);
 HOEDOWN_SET_EXTENSIONS(disableindentedcode, HOEDOWN_EXT_DISABLE_INDENTED_CODE);
-HOEDOWN_SET_EXTENSIONS(highlight, HOEDOWN_EXT_HIGHLIGHT);
-HOEDOWN_SET_EXTENSIONS(footnotes, HOEDOWN_EXT_FOOTNOTES);
-HOEDOWN_SET_EXTENSIONS(quote, HOEDOWN_EXT_QUOTE);
+#ifdef HOEDOWN_VERSION_EXTRAS
 HOEDOWN_SET_EXTENSIONS(specialattribute, HOEDOWN_EXT_SPECIAL_ATTRIBUTE);
+#endif
 
-#define HOEDOWN_SET_RENDER(_name, _ext)                                          \
-static const char *                                                              \
-hoedown_set_render_ ## _name(cmd_parms * UNUSED(parms), void *mconfig, int bool) \
-{                                                                                \
-    hoedown_config_rec *cfg = (hoedown_config_rec *)mconfig;                     \
-    if (bool != 0) {                                                             \
-        cfg->html |= _ext;                                                       \
-    }                                                                            \
-    return NULL;                                                                 \
+#define HOEDOWN_SET_RENDER(_name, _ext) \
+static const char * \
+hoedown_set_render_ ## _name( \
+    cmd_parms * UNUSED(parms), void *mconfig, int bool) { \
+    hoedown_config_rec *cfg = (hoedown_config_rec *)mconfig; \
+    if (bool != 0) { \
+        cfg->html |= _ext; \
+    } \
+    return NULL; \
 }
 
 HOEDOWN_SET_RENDER(skiphtml, HOEDOWN_HTML_SKIP_HTML);
@@ -750,10 +768,10 @@ HOEDOWN_SET_RENDER(toc, HOEDOWN_HTML_TOC);
 HOEDOWN_SET_RENDER(hardwrap, HOEDOWN_HTML_HARD_WRAP);
 HOEDOWN_SET_RENDER(usexhtml, HOEDOWN_HTML_USE_XHTML);
 HOEDOWN_SET_RENDER(escape, HOEDOWN_HTML_ESCAPE);
-HOEDOWN_SET_RENDER(prettify, HOEDOWN_HTML_PRETTIFY);
+#ifdef HOEDOWN_VERSION_EXTRAS
 HOEDOWN_SET_RENDER(usetasklist, HOEDOWN_HTML_USE_TASK_LIST);
-HOEDOWN_SET_RENDER(skipeol, HOEDOWN_HTML_SKIP_EOL);
-HOEDOWN_SET_RENDER(tocskipescape, HOEDOWN_HTML_SKIP_TOC_ESCAPE);
+HOEDOWN_SET_RENDER(linecontinue, HOEDOWN_HTML_LINE_CONTINUE);
+#endif
 
 static const command_rec
 hoedown_cmds[] = {
@@ -773,6 +791,7 @@ hoedown_cmds[] = {
     AP_INIT_TAKE1("HoedownStyleExtension", ap_set_string_slot,
                   (void *)APR_OFFSETOF(hoedown_config_rec, style.ext),
                   OR_ALL, "hoedown default style file extension"),
+#ifdef HOEDOWN_VERSION_EXTRAS
     /* Class name */
     AP_INIT_TAKE1("HoedownClassUl", ap_set_string_slot,
                   (void *)APR_OFFSETOF(hoedown_config_rec, class.ul),
@@ -783,33 +802,42 @@ hoedown_cmds[] = {
     AP_INIT_TAKE1("HoedownClassTask", ap_set_string_slot,
                   (void *)APR_OFFSETOF(hoedown_config_rec, class.task),
                   OR_ALL, "hoedown task list class attributes"),
+#endif
     /* Toc options */
-    AP_INIT_TAKE1("HoedownTocHeader", ap_set_string_slot,
-                  (void *)APR_OFFSETOF(hoedown_config_rec, toc.header),
-                  OR_ALL, "hoedown toc header"),
-    AP_INIT_TAKE1("HoedownTocFooter", ap_set_string_slot,
-                  (void *)APR_OFFSETOF(hoedown_config_rec, toc.footer),
-                  OR_ALL, "hoedown toc footer"),
     AP_INIT_TAKE1("HoedownTocStarting", ap_set_int_slot,
                   (void *)APR_OFFSETOF(hoedown_config_rec, toc.starting),
                   OR_ALL, "hoedown toc starting level"),
     AP_INIT_TAKE1("HoedownTocNesting", ap_set_int_slot,
                   (void *)APR_OFFSETOF(hoedown_config_rec, toc.nesting),
                   OR_ALL, "hoedown toc nesting level"),
+#ifdef HOEDOWN_VERSION_EXTRAS
+    AP_INIT_TAKE1("HoedownTocHeader", ap_set_string_slot,
+                  (void *)APR_OFFSETOF(hoedown_config_rec, toc.header),
+                  OR_ALL, "hoedown toc header"),
+    AP_INIT_TAKE1("HoedownTocFooter", ap_set_string_slot,
+                  (void *)APR_OFFSETOF(hoedown_config_rec, toc.footer),
+                  OR_ALL, "hoedown toc footer"),
+    AP_INIT_FLAG("HoedownTocUnescape", ap_set_flag_slot,
+                 (void *)APR_OFFSETOF(hoedown_config_rec, toc.unescape),
+                 OR_ALL, "hoedown toc unescape"),
+#endif
     /* Raw options */
     AP_INIT_FLAG("HoedownRaw", ap_set_flag_slot,
                  (void *)APR_OFFSETOF(hoedown_config_rec, raw),
                  OR_ALL, "Enable hoedown raw support"),
     /* Markdown extension options */
-    AP_INIT_FLAG("HoedownExtNoIntraEmphasis",
-                 hoedown_set_extensions_nointraemphasis,
-                 NULL, OR_ALL, "Enable hoedown extension NoIntraEmphasis"),
+    AP_INIT_FLAG("HoedownExtSpaceHeaders",
+                 hoedown_set_extensions_spaceheaders,
+                 NULL, OR_ALL, "Enable hoedown extension Space Headers"),
     AP_INIT_FLAG("HoedownExtTables",
                  hoedown_set_extensions_tables,
                  NULL, OR_ALL, "Enable hoedown extension Tables"),
     AP_INIT_FLAG("HoedownExtFencedCode",
                  hoedown_set_extensions_fencedcode,
                  NULL, OR_ALL, "Enable hoedown extension Fenced Code"),
+    AP_INIT_FLAG("HoedownExtFootnotes",
+                 hoedown_set_extensions_footnotes,
+                 NULL, OR_ALL, "Enable hoedown extension Footnotes"),
     AP_INIT_FLAG("HoedownExtAutolink",
                  hoedown_set_extensions_autolink,
                  NULL, OR_ALL, "Enable hoedown extension Autolink"),
@@ -819,30 +847,29 @@ hoedown_cmds[] = {
     AP_INIT_FLAG("HoedownExtUnderline",
                  hoedown_set_extensions_underline,
                  NULL, OR_ALL, "Enable hoedown extension Underline"),
-    AP_INIT_FLAG("HoedownExtSpaceHeaders",
-                 hoedown_set_extensions_spaceheaders,
-                 NULL, OR_ALL, "Enable hoedown extension Space Headers"),
+    AP_INIT_FLAG("HoedownExtHighlight",
+                 hoedown_set_extensions_highlight,
+                 NULL, OR_ALL, "Enable hoedown extension Highlight"),
+    AP_INIT_FLAG("HoedownExtQuote",
+                 hoedown_set_extensions_quote,
+                 NULL, OR_ALL, "Enable hoedown extension Quote"),
     AP_INIT_FLAG("HoedownExtSuperscript",
                  hoedown_set_extensions_superscript,
                  NULL, OR_ALL, "Enable hoedown extension Superscript"),
     AP_INIT_FLAG("HoedownExtLaxSpacing",
                  hoedown_set_extensions_laxspacing,
                  NULL, OR_ALL, "Enable hoedown extension Lax Spacing"),
+    AP_INIT_FLAG("HoedownExtNoIntraEmphasis",
+                 hoedown_set_extensions_nointraemphasis,
+                 NULL, OR_ALL, "Enable hoedown extension NoIntraEmphasis"),
     AP_INIT_FLAG("HoedownExtDisableIndentedCode",
                  hoedown_set_extensions_disableindentedcode,
                  NULL, OR_ALL, "Disable hoedown extension Indented Code"),
-    AP_INIT_FLAG("HoedownExtHighlight",
-                 hoedown_set_extensions_highlight,
-                 NULL, OR_ALL, "Enable hoedown extension Highlight"),
-    AP_INIT_FLAG("HoedownExtFootnotes",
-                 hoedown_set_extensions_footnotes,
-                 NULL, OR_ALL, "Enable hoedown extension Footnotes"),
-    AP_INIT_FLAG("HoedownExtQuote",
-                 hoedown_set_extensions_quote,
-                 NULL, OR_ALL, "Enable hoedown extension Quote"),
+#ifdef HOEDOWN_VERSION_EXTRAS
     AP_INIT_FLAG("HoedownExtSpecialAttribute",
                  hoedown_set_extensions_specialattribute,
                  NULL, OR_ALL, "Enable hoedown extension Special Attribute"),
+#endif
     /* Html Render mode options */
     AP_INIT_FLAG("HoedownRenderSkipHtml", hoedown_set_render_skiphtml,
                  NULL, OR_ALL, "Enable hoedown render Skip HTML"),
@@ -864,14 +891,12 @@ hoedown_cmds[] = {
                  NULL, OR_ALL, "Enable hoedown render Use XHTML"),
     AP_INIT_FLAG("HoedownRenderEscape", hoedown_set_render_escape,
                  NULL, OR_ALL, "Enable hoedown render Escape"),
-    AP_INIT_FLAG("HoedownRenderPrettify", hoedown_set_render_prettify,
-                 NULL, OR_ALL, "Enable hoedown render Prettify"),
+#ifdef HOEDOWN_VERSION_EXTRAS
     AP_INIT_FLAG("HoedownRenderUseTaskList", hoedown_set_render_usetasklist,
-                 NULL, OR_ALL, "Enable hoedown render Use Task List"),
-    AP_INIT_FLAG("HoedownRenderSkipEol", hoedown_set_render_skipeol,
-                 NULL, OR_ALL, "Enable hoedown render Skip EOL"),
-    AP_INIT_FLAG("HoedownRenderTocSkipEscape", hoedown_set_render_tocskipescape,
-                 NULL, OR_ALL, "Enable hoedown render Skip Toc Escape"),
+                NULL, OR_ALL, "Enable hoedown render Use Task List"),
+    AP_INIT_FLAG("HoedownRenderLineContinue", hoedown_set_render_linecontinue,
+                 NULL, OR_ALL, "Enable hoedown render Line Continue"),
+#endif
     {NULL}
 };
 

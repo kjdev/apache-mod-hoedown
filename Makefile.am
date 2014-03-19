@@ -12,8 +12,9 @@ mod_hoedown_la_SOURCES = \
 	hoedown/src/html.c \
 	hoedown/src/html_blocks.c \
 	hoedown/src/html_smartypants.c \
-	hoedown/src/markdown.c \
-	hoedown/src/stack.c
+	hoedown/src/document.c \
+	hoedown/src/stack.c \
+	hoedown/src/version.c
 
 mod_hoedown_la_CFLAGS = @APACHE_CFLAGS@ @APACHE_INCLUDES@ @CURL_CFLAGS@
 mod_hoedown_la_CPPFLAGS = @APACHE_CPPFLAGS@ @APACHE_INCLUDES@ @CURL_CPPFLAGS@

@@ -4,7 +4,7 @@ mod_hoedown is Markdown handler module for Apache HTTPD Server.
 
 ## Dependencies
 
-* [hoedown](https://github.com/kjdev/hoedown)
+* [hoextdown](https://github.com/kjdev/hoextdown.git)
 
 ## Build
 
@@ -50,719 +50,649 @@ Set the "hoedown" to `SetHandler` or `AddHander`.
 
 String:
 
-* HoedownDefaultPage
-* HoedownDirectoryIndex
-* HoedownStylePath
-* HoedownStyleDefault
-* HoedownStyleExtension
-* HoedownClassUl
-* HoedownClassOl
-* HoedownClassTask
-* HoedownTocHeader
-* HoedownTocFooter
+* [HoedownDefaultPage](#hoedowndefaultpage)
+* [HoedownDirectoryIndex](#hoedowndirectoryindex)
+* [HoedownStylePath](#hoedownstylepath)
+* [HoedownStyleDefault](#hoedownstyledefault)
+* [HoedownStyleExtension](#hoedownstyleextension)
+* [HoedownClassUl](#hoedownclassul)
+* [HoedownClassOl](#hoedownClassol)
+* [HoedownClassTask](#hoedownclasstask)
+* [HoedownTocHeader](#hoedowntocheader)
+* [HoedownTocFooter](#hoedowntocfooter)
 
 Numeric:
 
-* HoedownTocStarting
-* HoedownTocNesting
+* [HoedownTocStarting](#hoedowntocstarting)
+* [HoedownTocNesting](#hoedowntocnesting)
 
 On/Off:
 
-* HoedownRaw
-* HoedownExtNoIntraEmphasis
-* HoedownExtTables
-* HoedownExtFencedCode
-* HoedownExtAutolink
-* HoedownExtStrikethrough
-* HoedownExtUnderline
-* HoedownExtSpaceHeaders
-* HoedownExtSuperscript
-* HoedownExtLaxSpacing
-* HoedownExtDisableIndentedCode
-* HoedownExtHighlight
-* HoedownExtFootnotes
-* HoedownExtQuote
-* HoedownExtSpecialAttribute
-* HoedownRenderSkipHtml
-* HoedownRenderSkipStyle
-* HoedownRenderSkipImages
-* HoedownRenderSkipLinks
-* HoedownRenderExpandTabs
-* HoedownRenderSafelink
-* HoedownRenderHardWrap
-* HoedownRenderUseXhtml
-* HoedownRenderEscape
-* HoedownRenderPrettify
-* HoedownRenderUseTaskList
-* HoedownRenderSkipEol
-* HoedownRenderToc
-* HoedownRenderTocSkipEscape
+* [HoedownRaw](#hoedownraw)
+* [HoedownTocUnescape](#hoedowntocunescape)
+* [HoedownExtSpaceHeaders](#hoedownextspaceheaders)
+* [HoedownExtTables](#hoedownexttables)
+* [HoedownExtFencedCode](#hoedownextfencedcode)
+* [HoedownExtFootnotes](#hoedownextfootnotes)
+* [HoedownExtAutolink](#hoedownextautolink)
+* [HoedownExtStrikethrough](#hoedownextstrikethrough)
+* [HoedownExtUnderline](#hoedownextunderline)
+* [HoedownExtHighlight](#hoedownexthighlight)
+* [HoedownExtQuote](#hoedownextquote)
+* [HoedownExtSuperscript](#hoedownextsuperscript)
+* [HoedownExtLaxSpacing](#hoedownextlaxspacing)
+* [HoedownExtNoIntraEmphasis](#hoedownextnointraemphasis)
+* [HoedownExtDisableIndentedCode](#hoedownextdisableindentedcode)
+* [HoedownExtSpecialAttribute](#hoedownextspecialattribute)
+* [HoedownRenderSkipHtml](#hoedownrenderskiphtml)
+* [HoedownRenderSkipStyle](#hoedownrenderskipstyle)
+* [HoedownRenderSkipImages](#hoedownrenderskipimages)
+* [HoedownRenderSkipLinks](#hoedownrenderskipLinks)
+* [HoedownRenderExpandTabs](#hoedownrenderexpandtabs)
+* [HoedownRenderSafelink](#hoedownrendersafelink)
+* [HoedownRenderToc](#hoedownrendertoc)
+* [HoedownRenderHardWrap](#hoedownrenderhardwrap)
+* [HoedownRenderUseXhtml](#hoedownrenderusexhtml)
+* [HoedownRenderEscape](#hoedownrenderescape)
+* [HoedownRenderUseTaskList](#hoedownrenderusetasklist)
+* [HoedownRenderLineContineu](#hoedownrenderlinecontineu)
 
+---
 
 ### Raw option
 
 Raw print support (default: Off).
 
-* HoedownRaw
+#### HoedownRaw
 
-  file: markdown.md
+file: markdown.md
 
-  ```
-  # Header
-  ```
+```
+# Header
+```
 
-  access: `http://localhost/markdown.md?raw`
+access: `http://localhost/markdown.md?raw`
 
-  __On__:
+Enable:
 
-  ```
-  # Header
-  ```
+```
+# Header
+```
 
-  __Off__:
+Disable:
 
-  ```
-  <h1>Header</h1>
-  ```
+```
+<h1>Header</h1>
+```
+
+---
 
 ### Extension options
 
 Markdown extension support (default: Off).
 
-* HoedownExtNoIntraEmphasis
+#### HoedownExtSpaceHeaders
+
+```
+# hoge
+#foo
+```
+
+Enable:
+
+```
+<h1>hoge</h1>
+<p>#foo</p>
+```
+
+Disable:
+
+```
+<h1>hoge</h1>
+<h1>foo</h1>
+```
+
+#### HoedownExtTables
+
+```
+First Header  | Second Header
+------------- | -------------
+Content Cell  | Content Cell
+Content Cell  | Content Cel
+```
+
+Enable:
+
+```
+<table><thead>
+<tr>
+<th>First Header</th>
+<th>Second Header</th>
+</tr>
+</thead><tbody>
+<tr>
+<td>Content Cell</td>
+<td>Content Cell</td>
+</tr>
+<tr>
+<td>Content Cell</td>
+<td>Content Cel</td>
+</tr>
+</tbody></table>
+```
 
-  ```
-  hoge_fuga_foo
-  ```
-
-  __On__:
-
-  ```
-  <p>hoge_fuga_foo</p>
-  ```
+Disable:
 
-  __Off__:
+```
+<p>First Header  | Second Header
+------------- | -------------
+Content Cell  | Content Cell
+Content Cell  | Content Cel</p>
+```
 
-  ```
-  <p>hoge<em>fuga</em>foo</p>
-  ```
+#### HoedownExtFencedCode
 
-* HoedownExtTables
+    ```php
+    echo "hello world";
+    ```
 
-  ```
-  First Header  | Second Header
-  ------------- | -------------
-  Content Cell  | Content Cell
-  Content Cell  | Content Cel
-  ```
+Enable:
 
-  __On__:
+```
+<pre><code class="php">echo &quot;hello world&quot;;
+</code></pre>
+```
 
-  ```
-  <table><thead>
-  <tr>
-  <th>First Header</th>
-  <th>Second Header</th>
-  </tr>
-  </thead><tbody>
-  <tr>
-  <td>Content Cell</td>
-  <td>Content Cell</td>
-  </tr>
-  <tr>
-  <td>Content Cell</td>
-  <td>Content Cel</td>
-  </tr>
-  </tbody></table>
-  ```
+Disable:
 
-  __Off__:
+```
+<p><code>php
+echo &quot;hello world&quot;;
+</code></p>
+```
 
-  ```
-  <p>First Header  | Second Header
-  ------------- | -------------
-  Content Cell  | Content Cell
-  Content Cell  | Content Cel</p>
-  ```
+#### HoedownExtFootnotes
 
-* HoedownExtFencedCode
+```
+Footnotes[^1] have a label[^label] and a definition[^!DEF].
 
-      ```php
-      echo "hello world";
-      ```
+[^1]: This is a footnote
+[^label]: A footnote on "label"
+[^!DEF]: The definition of a footnote.
+```
 
-  __On__:
+Enable:
 
-  ```
-  <pre><code class="php">echo &quot;hello world&quot;;
-  </code></pre>
-  ```
+```
+<p>Footnotes<sup id="fnref1"><a href="#fn1" rel="footnote">1</a></sup> have a label<sup id="fnref2"><a href="#fn2" rel="footnote">2</a></sup> and a definition<sup id="fnref3"><a href="#fn3" rel="footnote">3</a></sup>.</p>
+```
 
-  __Off__:
+* footer
 
   ```
-  <p><code>php
-  echo &quot;hello world&quot;;
-  </code></p>
+  <div class="footnotes">
+  <hr>
+  <ol>
+  <li id="fn1">
+  <p>This is a footnote&nbsp;<a href="#fnref1" rel="footnote-ref">&#8617;</a></p>
+  </li>
+  <li id="fn2">
+  <p>A footnote on &quot;label&quot;&nbsp;<a href="#fnref2" rel="footnote-ref">&#8617;</a></p>
+  </li>
+  <li id="fn3">
+  <p>The definition of a footnote.&nbsp;<a href="#fnref3" rel="footnote-ref">&#8617;</a></p>
+  </li>
+  </ol>
+  </div>
   ```
 
-* HoedownExtAutolink
-
-  ```
-  https://github.com/kjdev
-  ```
+Disable:
 
-  __On__:
+```
+<p>Footnotes[^1] have a label[^label] and a definition[^!DEF].</p>
 
-  ```
-  <p><a href="https://github.com/kjdev">https://github.com/kjdev</a></p>
-  ```
+<p>[^1]: This is a footnote
+[^label]: A footnote on &quot;label&quot;
+[^!DEF]: The definition of a footnote.</p>
+```
 
-  __Off__:
+#### HoedownExtAutolink
 
-  ```
-  <p>https://github.com/kjdev</p>
-  ```
+```
+https://github.com/kjdev
+```
 
-* HoedownExtStrikethrough
+Enable:
 
-  ```
-  this is ~~good~~ bad.
-  ```
+```
+<p><a href="https://github.com/kjdev">https://github.com/kjdev</a></p>
+```
 
-  __On__:
+Disable:
 
-  ```
-  <p>this is <del>good</del> bad.</p>
-  ```
+```
+<p>https://github.com/kjdev</p>
+```
 
-  __Off__:
+#### HoedownExtStrikethrough
 
-  ```
-  <p>this is ~~good~~ bad.</p>
-  ```
+```
+this is ~~good~~ bad.
+```
 
-* HoedownExtUnderline
+Enable:
 
-  ```
-  this is _good_ bad.
-  ```
+```
+<p>this is <del>good</del> bad.</p>
+```
 
-  __On__:
+Disable:
 
-  ```
-  <p>this is <u>good</u> bad.</p>
-  ```
+```
+<p>this is ~~good~~ bad.</p>
+```
 
-  __Off__:
+#### HoedownExtUnderline
 
-  ```
-  <p>this is <em>good</em> bad.</p>
-  ```
+```
+this is _good_ bad.
+```
 
+Enable:
 
-* HoedownExtSpaceHeaders
+```
+<p>this is <u>good</u> bad.</p>
+```
 
-  ```
-  # hoge
-  #foo
-  ```
+Disable:
 
-  __On__:
+```
+<p>this is <em>good</em> bad.</p>
+```
 
-  ```
-  <h1>hoge</h1>
-  <p>#foo</p>
-  ```
+#### HoedownExtHighlight
 
-  __Off__:
+```
+this is ==good== bad.
+```
 
-  ```
-  <h1>hoge</h1>
-  <h1>foo</h1>
-  ```
+Enable:
 
-* HoedownExtSuperscript
+```
+<p>this is <mark>good</mark> bad.</p>
+```
 
-  ```
-  hoge^(fuga)
-  hoge ^fuga
-  hoge ^fu^ga
-  ```
+Disable:
 
-  __On__:
+```
+<p>this is ==good== bad.</p>
+```
 
-  ```
-  <p>hoge<sup>fuga</sup>
-  hoge <sup>fuga</sup>
-  hoge <sup>fu<sup>ga</sup></sup></p>
-  ```
 
-  __Off__:
+#### HoedownExtQuote
 
-  ```
-  <p>hoge^(fuga)
-  hoge ^fuga
-  hoge ^fu^ga</p>
-  ```
+```
+this is "good" bad.
+```
 
-* HoedownExtLaxSpacing
+Enable:
 
-  ?
+```
+<p>this is <q>good</q> bad.</p>
+```
 
-* HoedownExtDisableIndentedCode
+Disable:
 
-  ```
-      echo "hoge"
-  ```
+```
+<p>this is &quot;good&quot; bad.</p>
+```
 
-  __On__:
+#### HoedownExtSuperscript
 
-  ```
-  <p>echo &quot;hoge&quot;</p>
-  ```
+```
+hoge^(fuga)
+hoge ^fuga
+hoge ^fu^ga
+```
 
-  __Off__:
+Enable:
 
-  ```
-  <pre><code>echo &quot;hoge&quot;
-  </code></pre>
-  ```
+```
+<p>hoge<sup>fuga</sup>
+hoge <sup>fuga</sup>
+hoge <sup>fu<sup>ga</sup></sup></p>
+```
 
-* HoedownExtHighlight
+Disable:
 
-  ```
-  this is ==good== bad.
-  ```
+```
+<p>hoge^(fuga)
+hoge ^fuga
+hoge ^fu^ga</p>
+```
 
-  __On__:
+#### HoedownExtLaxSpacing
 
-  ```
-  <p>this is <mark>good</mark> bad.</p>
-  ```
+?
 
-  __Off__:
+#### HoedownExtNoIntraEmphasis
 
-  ```
-  <p>this is ==good== bad.</p>
-  ```
+```
+hoge_fuga_foo
+```
 
-* HoedownExtFootnotes
+Enable:
 
-  ```
-  Footnotes[^1] have a label[^label] and a definition[^!DEF].
-
-  [^1]: This is a footnote
-  [^label]: A footnote on "label"
-  [^!DEF]: The definition of a footnote.
-  ```
+```
+<p>hoge_fuga_foo</p>
+```
 
-  __On__:
+Disable:
 
-  ```
-  <p>Footnotes<sup id="fnref1"><a href="#fn1" rel="footnote">1</a></sup> have a label<sup id="fnref2"><a href="#fn2" rel="footnote">2</a></sup> and a definition<sup id="fnref3"><a href="#fn3" rel="footnote">3</a></sup>.</p>
-  ```
+```
+<p>hoge<em>fuga</em>foo</p>
+```
 
-  * footer
-
-      ```
-      <div class="footnotes">
-      <hr>
-      <ol>
-      <li id="fn1">
-      <p>This is a footnote&nbsp;<a href="#fnref1" rel="footnote-ref">&#8617;</a></p>
-      </li>
-      <li id="fn2">
-      <p>A footnote on &quot;label&quot;&nbsp;<a href="#fnref2" rel="footnote-ref">&#8617;</a></p>
-      </li>
-      <li id="fn3">
-      <p>The definition of a footnote.&nbsp;<a href="#fnref3" rel="footnote-ref">&#8617;</a></p>
-      </li>
-      </ol>
-      </div>
-      ```
-
-  __Off__:
+#### HoedownExtDisableIndentedCode
 
-  ```
-  <p>Footnotes[^1] have a label[^label] and a definition[^!DEF].</p>
-
-  <p>[^1]: This is a footnote
-  [^label]: A footnote on &quot;label&quot;
-  [^!DEF]: The definition of a footnote.</p>
-  ```
+```
+    echo "hoge"
+```
 
-* HoedownExtQuote
+Enable:
 
-  ```
-  this is "good" bad.
-  ```
+```
+<p>echo &quot;hoge&quot;</p>
+```
 
-  __On__:
+Disable:
 
-  ```
-  <p>this is <q>good</q> bad.</p>
-  ```
+```
+<pre><code>echo &quot;hoge&quot;
+</code></pre>
+```
 
-  __Off__:
 
-  ```
-  <p>this is &quot;good&quot; bad.</p>
-  ```
+#### HoedownExtSpecialAttribute
 
-* HoedownExtSpecialAttribute
+```
+# header {.head #id1}
 
-  ```
-  # header {.head #id1}
+[kjdev](https://github.com/kjdev){#id2 .link .github}
 
-  [kjdev](https://github.com/kjdev){#id2 .link .github}
+* item1 {#item1 .item}
+* item2 {.hoge #item2 .item}
+```
 
-  * item1 {#item1 .item}
-  * item2 {.hoge #item2 .item}
-  ```
+Enable:
 
-  __On__:
+```
+<h1 id="id1" class="head">header</h1>
 
-  ```
-  <h1 id="id1" class="head">header</h1>
+<p><a href="https://github.com/kjdev" id="id2" class="link github">kjdev</a></p>
 
-  <p><a href="https://github.com/kjdev" id="id2" class="link github">kjdev</a></p>
+<ul>
+<li id="item1" class="item">item1</li>
+<li id="item2" class="hoge item"><p>item2</p></li>
+</ul>
+```
 
-  <ul>
-  <li id="item1" class="item">item1</li>
-  <li id="item2" class="hoge item"><p>item2</p></li>
-  </ul>
-  ```
+Disable:
 
-  __Off__:
+```
+<h1>header {.head #id1}</h1>
 
-  ```
-  <h1>header {.head #id1}</h1>
+<p><a href="https://github.com/kjdev">kjdev</a>{#id2 .link .github}</p>
 
-  <p><a href="https://github.com/kjdev">kjdev</a>{#id2 .link .github}</p>
+<ul>
+<li>item1 {#item1 .item}</li>
+<li><p>item2 {.hoge #item2 .item}</p></li>
+</ul>
+```
 
-  <ul>
-  <li>item1 {#item1 .item}</li>
-  <li><p>item2 {.hoge #item2 .item}</p></li>
-  </ul>
-  ```
+---
 
 ### HTML Render options
 
 HTML render option (default: Off).
 
-* HoedownRenderSkipHtml
+#### HoedownRenderSkipHtml
 
-  ```
-  hoge<span>foo</span>
-  ```
+```
+hoge<span>foo</span>
+```
 
-  __On__:
+Enable:
 
-  ```
-  <p>hogefoo</p>
-  ```
+```
+<p>hogefoo</p>
+```
 
-  __Off__:
+Disable:
 
-  ```
-  <p>hoge<span>foo</span></p>
-  ```
+```
+<p>hoge<span>foo</span></p>
+```
 
-* HoedownRenderSkipStyle
+#### HoedownRenderSkipStyle
 
-  ```
-  hoge<style>foo</style>
-  ```
+```
+hoge<style>foo</style>
+```
 
-  __On__:
+Enable:
 
-  ```
-  <p>hogefoo</p>
-  ```
+```
+<p>hogefoo</p>
+```
 
-  __Off__:
+Disable:
 
-  ```
-  <p>hoge<style>foo</style></p>
-  ```
+```
+<p>hoge<style>foo</style></p>
+```
 
-* HoedownRenderSkipImages
+#### HoedownRenderSkipImages
 
-  ```
-  Image: <img src="test.png">
-  ```
+```
+Image: <img src="test.png">
+```
 
-  __On__:
+Enable:
 
-  ```
-  <p>Image: </p>
-  ```
+```
+<p>Image: </p>
+```
 
-  __Off__:
+Disable:
 
-  ```
-  <p>Image: <img src="test.png"></p>
-  ```
+```
+<p>Image: <img src="test.png"></p>
+```
 
-* HoedownRenderSkipLinks
+#### HoedownRenderSkipLinks
 
-  ```
-  Link: <a href="#">here</a>
-  ```
+```
+Link: <a href="#">here</a>
+```
 
-  __On__:
+Enable:
 
-  ```
-  <p>Link: here</p>
-  ```
+```
+<p>Link: here</p>
+```
 
-  __Off__:
+Disable:
 
-  ```
-  <p>Link: <a href="#">here</a></p>
-  ```
+```
+<p>Link: <a href="#">here</a></p>
+```
 
-* HoedownRenderExpandTabs
+#### HoedownRenderExpandTabs
 
-  Does not use.
+Does not use.
 
-* HoedownRenderSafelink
+#### HoedownRenderSafelink
 
-  ```
-  [github](https://github.com/kjdev)
-  [file](file:///local.file)
-  ```
+```
+[github](https://github.com/kjdev)
+[file](file:///local.file)
+```
 
-  __On__:
+Enable:
 
-  ```
-  <p><a href="https://github.com/kjdev">github</a>
-  [file](file:///local.file)</p>
-  ```
+```
+<p><a href="https://github.com/kjdev">github</a>
+[file](file:///local.file)</p>
+```
 
-  __Off__:
+Disable:
 
-  ```
-  <p><a href="https://github.com/kjdev">github</a>
-  <a href="file:///local.file">file</a></p>
-  ```
+```
+<p><a href="https://github.com/kjdev">github</a>
+<a href="file:///local.file">file</a></p>
+```
 
-* HoedownRenderHardWrap
+#### HoedownRenderToc
 
-  ```
-  hoge
-  foo
-  ```
+```
+## header2-1
+## header2-2
+```
 
-  __On__:
+Enable:
 
-  ```
-  <p>hoge<br>
-  foo</p>
-  ```
+```
+<h2 id="header2-1">header2-1</h2>
+<h2 id="header2-2">header2-2</h2>
+```
 
-  __Off__:
-
-  ```
-  <p>hoge
-  foo</p>
-  ```
-
-* HoedownRenderUseXhtml
-
-  ```
-  ---
-  ```
-
-  __On__:
-
-  ```
-  <hr/>
-  ```
-
-  __Off__:
-
-  ```
-  <hr>
-  ```
-
-* HoedownRenderEscape
-
-  ```
-  <a href="#">here</a>
-  ```
-
-  __On__:
-
-  ```
-  <p>&lt;a href=&quot;#&quot;&gt;here&lt;/a&gt;</p>
-  ```
-
-  __Off__:
-
-  ```
-  <p><a href="#">here</a></p>
-  ```
-
-* HoedownRenderPrettify
-
-  ```
-  `code`
-
-      echo "hoge"
-  ```
-
-  __On__:
-
-  ```
-  <p><code class="prettyprint">code</code></p>
-
-  <pre><code class="prettyprint">echo &quot;hoge&quot;
-  </code></pre>
-  ```
-
-  __Off__:
-
-  ```
-  <p><code>code</code></p>
-
-  <pre><code>echo &quot;hoge&quot;
-  </code></pre>
-  ```
-
-* HoedownRenderUseTaskList
-
-  ```
-  * [ ] task1
-  * [x] task2
-  * [ ] task3
-  ```
-
-  __On__:
+* toc render:
 
   ```
   <ul>
-  <li><input type="checkbox"> task1</li>
-  <li><input checked="" type="checkbox"> task2</li>
-  <li><input type="checkbox"> task3</li>
+  <li>
+  <a href="#header2-1">header2-1</a>
+  </li>
+  <li>
+  <a href="#header2-2">header2-2</a>
+  </li>
   </ul>
   ```
 
-  __Off__:
+Disable:
 
-  ```
-  <ul>
-  <li>[ ] task1</li>
-  <li>[x] task2</li>
-  <li>[ ] task3</li>
-  </ul>
-  ```
+```
+<h2>header2-1</h2>
+<h2>header2-2</h2>
+```
 
-* HoedownRenderSkipEol
+#### HoedownRenderHardWrap
 
-  ```
-  hoge
-  foo
-  huga
-  ```
+```
+hoge
+foo
+```
 
-  __On__:
+Enable:
 
-  ```
-  <p>hoge foo huga</p>
-  ```
+```
+<p>hoge<br>
+foo</p>
+```
 
-  __Off__:
+Disable:
 
-  ```
-  <p>hoge
-  foo
-  huga</p>
-  ```
+```
+<p>hoge
+foo</p>
+```
 
-* HoedownRenderToc
+#### HoedownRenderUseXhtml
 
-  ```
-  ## header2-1
-  ## header2-2
-  ```
+```
+---
+```
 
-  __On__:
+Enable:
 
-  ```
-  <h2 id="header2-1">header2-1</h2>
-  <h2 id="header2-2">header2-2</h2>
-  ```
+```
+<hr/>
+```
 
-  * toc render:
+Disable:
 
-     ```
-     <ul>
-     <li>
-     <a href="#header2-1">header2-1</a>
-     </li>
-     <li>
-     <a href="#header2-2">header2-2</a>
-     </li>
-     </ul>
-     ```
+```
+<hr>
+```
 
-  __Off__:
+#### HoedownRenderEscape
 
-  ```
-  <h2>header2-1</h2>
-  <h2>header2-2</h2>
-  ```
+```
+<a href="#">here</a>
+```
 
-* HoedownRenderTocSkipEscape
+Enable:
 
-  Required HoedownRenderToc option.
+```
+<p>&lt;a href=&quot;#&quot;&gt;here&lt;/a&gt;</p>
+```
 
-  ```
-  ## `Hoge`
-  ## `Foo`
-  ```
+Disable:
 
-  __On__:
+```
+<p><a href="#">here</a></p>
+```
 
-  ```
-  <h2 id="-code-hoge--code-"><code>Hoge</code></h2>
-  <h2 id="-code-foo--code-"><code>Foo</code></h2>
-  ```
+#### HoedownRenderUseTaskList
 
-  * toc render:
+```
+* [ ] task1
+* [x] task2
+* [ ] task3
+```
 
-     ```
-     <ul>
-     <li>
-     <a href="#-code-hoge--code-"><code>Hoge</code></a>
-     </li>
-     <li>
-     <a href="#-code-foo--code-"><code>Foo</code></a>
-     </li>
-     </ul>
-     ```
+Enable:
 
-  __Off__:
+```
+<ul>
+<li><input type="checkbox"> task1</li>
+<li><input checked="" type="checkbox"> task2</li>
+<li><input type="checkbox"> task3</li>
+</ul>
+```
 
-  ```
-  <h2 id="-code-hoge--code-"><code>Hoge</code></h2>
-  <h2 id="-code-foo--code-"><code>Foo</code></h2>
-  ```
+Disable:
 
-  * toc render:
+```
+<ul>
+<li>[ ] task1</li>
+<li>[x] task2</li>
+<li>[ ] task3</li>
+</ul>
+```
 
-     ```
-     <ul>
-     <li>
-     <a href="#-code-hoge--code-">&lt;code&gt;Hoge&lt;/code&gt;</a>
-     </li>
-     <li>
-     <a href="#-code-foo--code-">&lt;code&gt;Foo&lt;/code&gt;</a>
-     </li>
-     </ul>
-     ```
+#### HoedownRenderLineContinue
+
+```
+hoge
+foo
+huga
+```
+
+Enable:
+
+```
+<p>hoge foo huga</p>
+```
+
+Disable:
+
+```
+<p>hoge
+foo
+huga</p>
+```
 
 ### Table of Contents options
 
@@ -770,23 +700,23 @@ Required HoedownRenderToc option.
 
 View the table of contents as a header and footer.
 
-* HoedownTocHeader
+#### HoedownTocHeader
 
-  Table of contents header.
+Table of contents header.
 
-* HoedownTocFooter
+#### HoedownTocFooter
 
-  Table of contents footer.
+Table of contents footer.
 
 View the table of contents as a HoedownTocNesting from HoedownTocStarting.
 
-* HoedownTocStarting
+#### HoedownTocStarting
 
-  Table of contents starting level (default: 2).
+Table of contents starting level (default: 2).
 
-* HoedownTocNesting
+#### HoedownTocNesting
 
-  Table of contents nesting level (default: 6).
+Table of contents nesting level (default: 6).
 
 ```
 # header1
@@ -891,99 +821,151 @@ You can change the toc range by specifying the toc parameters.
 
   Same as HoedownTocStarting = 3, HoedownTocNesting = 5.
 
+
+#### HoedownRenderTocUnescape
+
+Table of contents escapel flags.
+
+Required HoedownRenderToc option.
+
+```
+## `Hoge`
+## `Foo`
+```
+
+Enable:
+
+```
+<h2 id="-code-hoge--code-"><code>Hoge</code></h2>
+<h2 id="-code-foo--code-"><code>Foo</code></h2>
+```
+
+* toc render:
+
+  ```
+  <ul>
+  <li>
+  <a href="#-code-hoge--code-"><code>Hoge</code></a>
+  </li>
+  <li>
+  <a href="#-code-foo--code-"><code>Foo</code></a>
+  </li>
+  </ul>
+  ```
+
+Disable:
+
+```
+<h2 id="-code-hoge--code-"><code>Hoge</code></h2>
+<h2 id="-code-foo--code-"><code>Foo</code></h2>
+```
+
+* toc render:
+
+  ```
+  <ul>
+  <li>
+  <a href="#-code-hoge--code-">&lt;code&gt;Hoge&lt;/code&gt;</a>
+  </li>
+  <li>
+  <a href="#-code-foo--code-">&lt;code&gt;Foo&lt;/code&gt;</a>
+  </li>
+  </ul>
+  ```
+
 ### Class options
 
 Set the class attribute of the list.
 
-* HoedownClassUl
+#### HoedownClassUl
 
-  ul tag class attribute.
+ul tag class attribute.
 
-  ```
-  * a
-  ```
+```
+* a
+```
 
-  default:
+default:
 
-  ```
-  <ul>
-  <li>a</li>
-  </ul>
-  ```
+```
+<ul>
+<li>a</li>
+</ul>
+```
 
-  conf: `HoedownClassUl ul-list`
+conf: `HoedownClassUl ul-list`
 
-  ```
-  <ul class="ul-list">
-  <li>a</li>
-  </ul>
-  ```
+```
+<ul class="ul-list">
+<li>a</li>
+</ul>
+```
 
-* HoedownClassOl
+#### HoedownClassOl
 
-  ol tag class attribute.
+ol tag class attribute.
 
-  ```
-  1. a
-  ```
+```
+1. a
+```
 
-  default:
+default:
 
-  ```
-  <ol>
-  <li>a</li>
-  </ol>
-  ```
+```
+<ol>
+<li>a</li>
+</ol>
+```
 
-  conf: `HoedownClassUl ol-list`
+conf: `HoedownClassUl ol-list`
 
-  ```
-  <ol class="ol-list">
-  <li>a</li>
-  </ol>
-  ```
+```
+<ol class="ol-list">
+<li>a</li>
+</ol>
+```
 
-* HoedownClassTask
+#### HoedownClassTask
 
-  Required HoedownRenderUseTaskList option.
+Required HoedownRenderUseTaskList option.
 
-  Class attribute of the task list (ex: `* [ ]` or `* [x]`).
+Class attribute of the task list (ex: `* [ ]` or `* [x]`).
 
-  ```
-  * [ ] a
-  ```
+```
+* [ ] a
+```
 
-  default:
+default:
 
-  ```
-  <ul>
-  <li><input type="checkbox"/> a</li>
-  </ul>
-  ```
+```
+<ul>
+<li><input type="checkbox"/> a</li>
+</ul>
+```
 
-  conf: `HoedownClassUl task-list`
+conf: `HoedownClassUl task-list`
 
-  ```
-  <ul class="task-list">
-  <li><input type="checkbox"/> a</li>
-  </ul>
-  ```
+```
+<ul class="task-list">
+<li><input type="checkbox"/> a</li>
+</ul>
+```
 
 ### Style options
 
 Set the style layout file.
 
-* HoedownStylePath
+#### HoedownStylePath
 
-  Set the style layout file directory path (default: httpd Document root).
+Set the style layout file directory path (default: httpd Document root).
 
-* HoedownStyleDefault
+#### HoedownStyleDefault
 
-  Set the style layout file name.
+Set the style layout file name.
 
-* HoedownStyleExtension
+#### HoedownStyleExtension
 
-  Set the style layout file extension (default: .html).
+Set the style layout file extension (default: .html).
 
 #### Example
 
@@ -1010,7 +992,7 @@ HoedownStyleExtension .html
 ```
 
 This will expand the markdown file next to the line
-with the "<body>" of style.html.
+with the `<body>` of style.html.
 
 #### Example multiple style
 
