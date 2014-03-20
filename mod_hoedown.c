@@ -613,8 +613,11 @@ hoedown_create_dir_config(apr_pool_t *p, char * UNUSED(dir))
     cfg->toc.footer = NULL;
     cfg->toc.unescape = 0;
     cfg->raw = 0;
-    cfg->extensions = 0;
     cfg->html = 0;
+    cfg->extensions =
+        HOEDOWN_EXT_TABLES | HOEDOWN_EXT_FENCED_CODE |
+        HOEDOWN_EXT_AUTOLINK | HOEDOWN_EXT_STRIKETHROUGH |
+        HOEDOWN_EXT_NO_INTRA_EMPHASIS;
 
     return (void *)cfg;
 }
@@ -726,6 +729,8 @@ hoedown_set_extensions_ ## _name( \
     hoedown_config_rec *cfg = (hoedown_config_rec *)mconfig; \
     if (bool != 0) { \
         cfg->extensions |= _ext; \
+    } else { \
+        cfg->extensions ^= _ext; \
     } \
     return NULL; \
 }
@@ -754,6 +759,8 @@ hoedown_set_render_ ## _name( \
     hoedown_config_rec *cfg = (hoedown_config_rec *)mconfig; \
     if (bool != 0) { \
         cfg->html |= _ext; \
+    } else { \
+        cfg->html ^= _ext; \
     } \
     return NULL; \
 }
