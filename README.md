@@ -63,8 +63,8 @@ String:
 
 Numeric:
 
-* [HoedownTocStarting](#hoedowntocstarting)
-* [HoedownTocNesting](#hoedowntocnesting)
+* [HoedownTocBegin](#hoedowntocbegin)
+* [HoedownTocEnd](#hoedowntocend)
 
 On/Off:
 
@@ -199,7 +199,7 @@ Content Cell  | Content Cel</p>
 Enable:
 
 ```
-<pre><code class="php">echo &quot;hello world&quot;;
+<pre><code class="language-php">echo &quot;hello world&quot;;
 </code></pre>
 ```
 
@@ -234,13 +234,13 @@ Enable:
   <hr>
   <ol>
   <li id="fn1">
-  <p>This is a footnote&nbsp;<a href="#fnref1" rel="footnote-ref">&#8617;</a></p>
+  <p>This is a footnote&nbsp;<a href="#fnref1" rev="footnote">&#8617;</a></p>
   </li>
   <li id="fn2">
-  <p>A footnote on &quot;label&quot;&nbsp;<a href="#fnref2" rel="footnote-ref">&#8617;</a></p>
+  <p>A footnote on &quot;label&quot;&nbsp;<a href="#fnref2" rev="footnote">&#8617;</a></p>
   </li>
   <li id="fn3">
-  <p>The definition of a footnote.&nbsp;<a href="#fnref3" rel="footnote-ref">&#8617;</a></p>
+  <p>The definition of a footnote.&nbsp;<a href="#fnref3" rev="footnote">&#8617;</a></p>
   </li>
   </ol>
   </div>
@@ -433,7 +433,7 @@ Enable:
 
 <ul>
 <li id="item1" class="item">item1</li>
-<li id="item2" class="hoge item"><p>item2</p></li>
+<li id="item2" class="hoge item">item2</li>
 </ul>
 ```
 
@@ -446,7 +446,7 @@ Disable:
 
 <ul>
 <li>item1 {#item1 .item}</li>
-<li><p>item2 {.hoge #item2 .item}</p></li>
+<li>item2 {.hoge #item2 .item}</li>
 </ul>
 ```
 
@@ -708,15 +708,15 @@ Table of contents header.
 
 Table of contents footer.
 
-View the table of contents as a HoedownTocNesting from HoedownTocStarting.
+View the table of contents as a HoedownTocEnd from HoedownTocBegin.
 
-#### HoedownTocStarting
+#### HoedownTocBegin
 
-Table of contents starting level (default: 2).
+Table of contents begin level (default: 2).
 
-#### HoedownTocNesting
+#### HoedownTocEnd
 
-Table of contents nesting level (default: 6).
+Table of contents end level (default: 6).
 
 ```
 # header1
@@ -759,7 +759,7 @@ default:
 </ul>
 ```
 
-conf: `HoedownTocStarting 1`, `HoedownTocNesting 3`
+conf: `HoedownTocBegin 1`, `HoedownTocEnd 3`
 
 ```
 <ul>
@@ -815,11 +815,11 @@ You can change the toc range by specifying the toc parameters.
 
 * `http://localhot/markdown.md?toc=3`
 
-  Same as HoedownTocStarting = 3, HoedownTocNesting = 3.
+  Same as HoedownTocBegin = 3, HoedownTocEnd = 3.
 
 * `http://localhot/markdown.md?toc=3:5`
 
-  Same as HoedownTocStarting = 3, HoedownTocNesting = 5.
+  Same as HoedownTocBegin = 3, HoedownTocEnd = 5.
 
 
 #### HoedownRenderTocUnescape

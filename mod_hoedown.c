@@ -19,8 +19,8 @@
 **    # Toc options
 **    HoedownTocHeader   '<div class="toc">'
 **    HoedownTocFooter   '</div>'
-**    HoedownTocStarting 2
-**    HoedownTocNesting  6
+**    HoedownTocBegin    2
+**    HoedownTocEnd      6
 **    HoedownTocUnescape Off
 **    # Raw options
 **    HoedownRaw On
@@ -108,8 +108,8 @@
 #define HOEDOWN_TAG             "<body*>"
 #define HOEDOWN_STYLE_EXT       ".html"
 #define HOEDOWN_DIRECTORY_INDEX "index.md"
-#define HOEDOWN_TOC_STARTING     2
-#define HOEDOWN_TOC_NESTING      6
+#define HOEDOWN_TOC_BEGIN        2
+#define HOEDOWN_TOC_END          6
 
 typedef struct {
     char *default_page;
@@ -125,8 +125,8 @@ typedef struct {
         char *task;
     } class;
     struct {
-        int starting;
-        int nesting;
+        int begin;
+        int end;
         int unescape;
         char *header;
         char *footer;
@@ -364,7 +364,7 @@ hoedown_handler(request_rec *r)
     char *text = NULL;
     char *raw = NULL;
     char *toc = NULL;
-    int toc_starting = HOEDOWN_TOC_STARTING, toc_nesting = HOEDOWN_TOC_NESTING;
+    int toc_begin = HOEDOWN_TOC_BEGIN, toc_end = HOEDOWN_TOC_END;
     apreq_handle_t *apreq;
     apr_table_t *params;
 
@@ -469,8 +469,8 @@ hoedown_handler(request_rec *r)
     }
 
     /* default toc level */
-    toc_starting = cfg->toc.starting;
-    toc_nesting = cfg->toc.nesting;
+    toc_begin = cfg->toc.begin;
+    toc_end = cfg->toc.end;
 
     if (ib->size > 0) {
         if (cfg->raw != 0 && raw != NULL) {
@@ -483,8 +483,11 @@ hoedown_handler(request_rec *r)
         /* output style header */
         fp = style_header(r, cfg, style, r->filename);
 
+        /* performing markdown parsing */
+        ob = hoedown_buffer_new(HOEDOWN_OUTPUT_UNIT);
+
+        /* toc */
         if (cfg->html & HOEDOWN_HTML_TOC) {
-            /* toc */
             if (toc) {
                 size_t len = strlen(toc);
                 int n;
@@ -497,31 +500,29 @@ hoedown_handler(request_rec *r)
                         toc_b = apr_pstrndup(r->pool, toc, i++);
                         n = atoi(toc_b);
                         if (n) {
-                            toc_starting = n;
+                            toc_begin = n;
                         }
 
                         toc_e = apr_pstrndup(r->pool, toc + i, len - i);
                         n = atoi(toc_e);
                         if (n) {
-                            toc_nesting = n;
+                            toc_end = n;
                         }
                     } else {
                         n = atoi(toc);
                         if (n) {
-                            toc_starting = n;
+                            toc_begin = n;
                         }
                     }
                 }
             }
 
-            ob = hoedown_buffer_new(HOEDOWN_OUTPUT_UNIT);
-
             renderer = hoedown_html_toc_renderer_new(0);
             state = (hoedown_html_renderer_state *)renderer->opaque;
 
             state->flags = cfg->html;
-            state->toc_data.level_offset = toc_starting;
-            state->toc_data.nesting_level = toc_nesting;
+            state->toc_data.level_offset = toc_begin;
+            state->toc_data.nesting_level = toc_end;
 #ifdef HOEDOWN_VERSION_EXTRAS
             state->toc_data.header = cfg->toc.header;
             state->toc_data.footer = cfg->toc.footer;
@@ -537,22 +538,14 @@ hoedown_handler(request_rec *r)
 
             ap_rwrite(ob->data, ob->size, r);
 
-            hoedown_buffer_free(ob);
+            hoedown_buffer_reset(ob);
         }
 
-        /* performing markdown parsing */
-        ob = hoedown_buffer_new(HOEDOWN_OUTPUT_UNIT);
-
         /* markdown render */
-        renderer = hoedown_html_renderer_new(0, 0);
-        state = (hoedown_html_renderer_state *)renderer->opaque;
-
-        state->flags = cfg->html;
-
-        state->toc_data.level_offset = toc_starting;
-        state->toc_data.nesting_level = toc_nesting;
+        renderer = hoedown_html_renderer_new(cfg->html, toc_end);
 
 #ifdef HOEDOWN_VERSION_EXTRAS
+        state = (hoedown_html_renderer_state *)renderer->opaque;
         if ((state->flags & HOEDOWN_HTML_USE_TASK_LIST) && cfg->class.task) {
             state->class_data.task = cfg->class.task;
         }
@@ -607,8 +600,8 @@ hoedown_create_dir_config(apr_pool_t *p, char * UNUSED(dir))
     cfg->class.ul = NULL;
     cfg->class.ol = NULL;
     cfg->class.task = NULL;
-    cfg->toc.starting = HOEDOWN_TOC_STARTING;
-    cfg->toc.nesting = HOEDOWN_TOC_NESTING;
+    cfg->toc.begin = HOEDOWN_TOC_BEGIN;
+    cfg->toc.end = HOEDOWN_TOC_END;
     cfg->toc.header = NULL;
     cfg->toc.footer = NULL;
     cfg->toc.unescape = 0;
@@ -674,15 +667,15 @@ hoedown_merge_dir_config(apr_pool_t *p, void *base_conf, void *override_conf)
     }
 #endif
 
-    if (override->toc.starting != HOEDOWN_TOC_STARTING) {
-        cfg->toc.starting = override->toc.starting;
+    if (override->toc.begin != HOEDOWN_TOC_BEGIN) {
+        cfg->toc.begin = override->toc.begin;
     } else {
-        cfg->toc.starting = base->toc.starting;
+        cfg->toc.begin = base->toc.begin;
     }
-    if (override->toc.nesting != HOEDOWN_TOC_NESTING) {
-        cfg->toc.nesting = override->toc.nesting;
+    if (override->toc.end != HOEDOWN_TOC_END) {
+        cfg->toc.end = override->toc.end;
     } else {
-        cfg->toc.nesting = base->toc.nesting;
+        cfg->toc.end = base->toc.end;
     }
 #ifdef HOEDOWN_VERSION_EXTRAS
     if (override->toc.header && strlen(override->toc.header) > 0) {
@@ -811,12 +804,12 @@ hoedown_cmds[] = {
                   OR_ALL, "hoedown task list class attributes"),
 #endif
     /* Toc options */
-    AP_INIT_TAKE1("HoedownTocStarting", ap_set_int_slot,
-                  (void *)APR_OFFSETOF(hoedown_config_rec, toc.starting),
-                  OR_ALL, "hoedown toc starting level"),
-    AP_INIT_TAKE1("HoedownTocNesting", ap_set_int_slot,
-                  (void *)APR_OFFSETOF(hoedown_config_rec, toc.nesting),
-                  OR_ALL, "hoedown toc nesting level"),
+    AP_INIT_TAKE1("HoedownTocBegin", ap_set_int_slot,
+                  (void *)APR_OFFSETOF(hoedown_config_rec, toc.begin),
+                  OR_ALL, "hoedown toc begin level"),
+    AP_INIT_TAKE1("HoedownTocEnd", ap_set_int_slot,
+                  (void *)APR_OFFSETOF(hoedown_config_rec, toc.end),
+                  OR_ALL, "hoedown toc end level"),
 #ifdef HOEDOWN_VERSION_EXTRAS
     AP_INIT_TAKE1("HoedownTocHeader", ap_set_string_slot,
                   (void *)APR_OFFSETOF(hoedown_config_rec, toc.header),
