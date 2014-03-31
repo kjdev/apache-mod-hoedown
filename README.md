@@ -9,6 +9,8 @@ mod_hoedown is Markdown handler module for Apache HTTPD Server.
 ## Build
 
 ```
+% git clone --recursive --depth=1 https://github.com/kjdev/apache-mod-hoedown.git
+% cd apache-mod-hoedown
 % ./autogen.sh (or autoreconf -i)
 % ./configure [OPTION]
 % make
